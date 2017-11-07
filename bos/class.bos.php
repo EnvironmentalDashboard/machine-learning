@@ -213,33 +213,44 @@ class BuildingOS {
 
   /**
    * Update individual meters
+   * @param   $meter_id  
+   * @param   $meter_url 
+   * @param   $res       
+   * @param   $chunk     max amount of data to request at one time
+   * @return [type]            [description]
    */
-  public function updateMeter($meter_id, $meter_uuid, $meter_url, $res, $meterClass, $debug = false) {
-    if ($debug) {
-      $log = array();
-    }
+  public function updateMeter($meter_id, $meter_url, $res, $chunk) {
     $time = time(); // end date
     // Get the most recent recording. Data fetched from the API will start at $last_recording and end at $time
     $stmt = $this->db->prepare('SELECT recorded FROM meter_data
       WHERE meter_id = ? AND resolution = ? ORDER BY recorded DESC LIMIT 1');
     $stmt->execute(array($meter_id, $res));
     $last_recording = ($stmt->rowCount() === 1) ? $stmt->fetchColumn() : strtotime('-4 years'); // start date
-    if ($debug) {
-      ob_start();
-      $meter_data = $this->getMeter($meter_url, $res, $last_recording, $time, $debug);
-      $log['URL'] = ob_get_clean();
+    $diff = $time - $last_recording;
+    if ($diff > $chunk) {
+      $meter_data = array();
+      $start = $last_recording;
+      $end = $start + $chunk;
+      while (true) {
+        $tmp = $this->getMeter($meter_url, $res, $start, $end);
+        if ($tmp === false) {
+          echo "Error fetching data for meter {$meter_id} from {$start} to {$end}\n";
+        }
+        $tmp = json_decode($tmp, true)['data'];
+        $meter_data = array_merge($meter_data, $tmp);
+        $start = $end;
+        $end += $chunk;
+        if ($end >= $time) {
+          break;
+        }
+      }
     } else {
-      $meter_data = $this->getMeter($meter_url, $res, $last_recording, $time, $debug);
-    }
-    if ($meter_data === false) { // file_get_contents returned false, so problem with API
-      return false;
-    }
-    $meter_data = json_decode($meter_data, true);
-    $meter_data = $meter_data['data'];
-    if ($debug) {
-      $log['Start time of requested data'] = date('F j, Y, g:i a', $last_recording);
-      $log['Current time'] = date('F j, Y, g:i a');
-      $log['Meter data'] = var_export($meter_data, true);
+      $meter_data = $this->getMeter($meter_url, $res, $last_recording, $time);
+      if ($meter_data === false) { // file_get_contents returned false, so problem with API
+        return false;
+      }
+      $meter_data = json_decode($meter_data, true);
+      $meter_data = $meter_data['data'];
     }
     if (!empty($meter_data)) {
       $last_value = null;
@@ -256,21 +267,18 @@ class BuildingOS {
         }
       }
     } // if !empty($meter_data)
-    if ($debug) {
-      echo json_encode($log);
-    }
     return true;
   }
 
   /**
    * Adds buildings from the BuildingOS API that aren't already in the database.
    * Optionally delete buildings/meters that no longer exist in the API
-   * @param  $org fed into getBuildings()
+   * @param  $org array fed into getBuildings()
    * @param  $delete_not_found delete buildings/meters that exist in the database but not the API
    */
   public function syncBuildings($org, $delete_not_found = false) {
     // Get a list of all buildings to compare against what's in db
-    $buildings = $this->getBuildings(array($org));
+    $buildings = $this->getBuildings($org);
     echo "Fetched all buildings\n";
     if ($buildings !== false) {
       if ($delete_not_found) { // Delete buildings in db not found in $buildings
