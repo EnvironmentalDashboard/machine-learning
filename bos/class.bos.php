@@ -244,6 +244,22 @@ class BuildingOS {
           break;
         }
       }
+      // while (true) {
+      //   $tmp = $this->getMeter($meter_url, $res, $start, $end);
+      //   if ($tmp === false) {
+      //     echo "Error fetching data for meter {$meter_id} from {$start} to {$end}\n";
+      //   } else {
+      //     print_r(json_decode($tmp, true)['data']);die();
+      //     foreach (json_decode($tmp, true)['data'] as $d) {
+      //       $meter_data[] = $d;
+      //     }
+      //     $start = $end;
+      //     $end += $chunk;
+      //     if ($end >= $time) {
+      //       break;
+      //     }
+      //   }
+      // }
     } else {
       $meter_data = $this->getMeter($meter_url, $res, $last_recording, $time);
       if ($meter_data === false) { // file_get_contents returned false, so problem with API

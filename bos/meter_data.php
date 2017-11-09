@@ -1,10 +1,13 @@
 <?php
 require_once 'class.bos.php';
+ignore_user_abort(1);
+set_time_limit(0);
 $bos = new BuildingOS($db);
-$res = 'hour';
-$chunk = 86400;
+$res = 'day';
+$chunk = 8640000; // download data in 100 day chunks
 foreach ($db->query('SELECT id, url FROM meters') as $meter) {
-	$bos->updateMeter($meter['id'], $meter['url'], $res, $chunk);
+	$bos->updateMeter($meter['id'], $meter['url'] . '/data', $res, $chunk);
+	break;
 	sleep(3); // don't bombard bos api
 }
 ?>
