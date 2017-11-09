@@ -7,7 +7,6 @@ $res = 'day';
 $chunk = 8640000; // download data in 100 day chunks
 foreach ($db->query('SELECT id, url FROM meters') as $meter) {
 	$bos->updateMeter($meter['id'], $meter['url'] . '/data', $res, $chunk);
-	break;
 	sleep(3); // don't bombard bos api
 }
 ?>
