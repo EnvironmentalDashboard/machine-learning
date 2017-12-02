@@ -37,6 +37,14 @@ def main():
 	timelist = create_time_list()
 	db = pymysql.connect(host="67.205.179.187", port=3306, user=config.username, password=config.password, db="csci374")
 	cur = db.cursor()
+	cur.execute("SELECT DISTINCT resource FROM meters")
+	resources = []
+	for resource in cur.fetchall():
+		resources.append(resource[0])
+	cur.execute("SELECT DISTINCT type FROM building")
+	building_types = []
+	for btype in cur.fetchall():
+		resources.append(btype[0])
 	cur.execute("SELECT id, name, area, occupancy, floors, type FROM buildings ORDER BY id ASC LIMIT 3") # take limit off when not testing
 	for building in cur.fetchall():
 		building_id = int(building[0])
@@ -45,10 +53,9 @@ def main():
 			cur.execute("SELECT value, recorded FROM meter_data WHERE meter_id = %s ORDER BY recorded DESC", int(meter[0]))
 			for data_point in cur.fetchall():
 				if random.randint(0, 100) > 50:
-					test_set.append([(building[1] + ' ' + meter[1]), data_point[0], onehot(datetime.datetime.fromtimestamp(int(data_point[1])).strftime('%m-%d'), timelist), building[2], building[3], building[4], building[5]])
+					test_set.append([(building[1] + ' ' + meter[1]), data_point[0], onehot(datetime.datetime.fromtimestamp(int(data_point[1])).strftime('%m-%d'), timelist), building[2], building[3], building[4], onehot(building[5], building_types), onehot(meter[2], resources)])
 				else:
-					training_set.append([(building[1] + ' ' + meter[1]), data_point[0], onehot(datetime.datetime.fromtimestamp(int(data_point[1])).strftime('%m-%d'), timelist), building[2], building[3], building[4], building[5]])
-
+					training_set.append([(building[1] + ' ' + meter[1]), data_point[0], onehot(datetime.datetime.fromtimestamp(int(data_point[1])).strftime('%m-%d'), timelist), building[2], building[3], building[4], onehot(building[5], building_types), onehot(meter[2], resources)])
 	db.close()
 	print(training_set[0])
 	# network(test_set, training_set)
