@@ -1,3 +1,4 @@
 bos/db.php
 bos/credentials.php
-db.py
+config.py
+.DS_Store
