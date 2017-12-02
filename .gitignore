@@ -2,3 +2,4 @@ bos/db.php
 bos/credentials.php
 config.py
 .DS_Store
+__pycache__
