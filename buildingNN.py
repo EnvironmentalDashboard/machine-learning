@@ -45,17 +45,17 @@ def main():
 	building_types = []
 	for btype in cur.fetchall():
 		building_types.append(btype[0])
-	cur.execute("SELECT id, name, area, occupancy, floors, type FROM buildings ORDER BY id ASC LIMIT 3") # take limit off when not testing
+	cur.execute("SELECT id, area, occupancy, floors, type FROM buildings ORDER BY id ASC LIMIT 3") # take limit off when not testing
 	for building in cur.fetchall():
 		building_id = int(building[0])
-		cur.execute("SELECT id, name, resource FROM meters WHERE building_id = %s", building_id)
+		cur.execute("SELECT id, uuid, resource FROM meters WHERE building_id = %s", building_id)
 		for meter in cur.fetchall():
-			cur.execute("SELECT value, recorded FROM meter_data WHERE meter_id = %s ORDER BY recorded DESC", int(meter[0]))
+			cur.execute("SELECT value, recorded FROM meter_data WHERE meter_id = %s AND value IS NOT NULL ORDER BY recorded DESC", int(meter[0]))
 			for data_point in cur.fetchall():
 				if random.randint(0, 100) > 50:
-					test_set.append([(building[1] + ' ' + meter[1]), data_point[0], onehot(datetime.datetime.fromtimestamp(int(data_point[1])).strftime('%m-%d'), timelist), building[2], building[3], building[4], onehot(building[5], building_types), onehot(meter[2], resources)])
+					test_set.append([(meter[1]), data_point[0], onehot(datetime.datetime.fromtimestamp(int(data_point[1])).strftime('%m-%d'), timelist), building[1], building[2], building[3], onehot(building[4], building_types), onehot(meter[2], resources)])
 				else:
-					training_set.append([(building[1] + ' ' + meter[1]), data_point[0], onehot(datetime.datetime.fromtimestamp(int(data_point[1])).strftime('%m-%d'), timelist), building[2], building[3], building[4], onehot(building[5], building_types), onehot(meter[2], resources)])
+					training_set.append([(meter[1]), data_point[0], onehot(datetime.datetime.fromtimestamp(int(data_point[1])).strftime('%m-%d'), timelist), building[1], building[2], building[3], onehot(building[4], building_types), onehot(meter[2], resources)])
 	db.close()
 	print(training_set[0])
 	# network(test_set, training_set)
