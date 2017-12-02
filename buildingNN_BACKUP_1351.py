@@ -1,8 +1,11 @@
 import datetime
 import config
 import pymysql.cursors # install with `pip install PyMySQL`
+<<<<<<< HEAD
 import tensorflow as tf
+=======
 import random
+>>>>>>> ee8d1fcd5b6666ca2761abb084fbadf4dae297cf
 
 
 def network(): # do neural net stuff
