@@ -41,10 +41,10 @@ def main():
 	resources = []
 	for resource in cur.fetchall():
 		resources.append(resource[0])
-	cur.execute("SELECT DISTINCT type FROM building")
+	cur.execute("SELECT DISTINCT type FROM buildings")
 	building_types = []
 	for btype in cur.fetchall():
-		resources.append(btype[0])
+		building_types.append(btype[0])
 	cur.execute("SELECT id, name, area, occupancy, floors, type FROM buildings ORDER BY id ASC LIMIT 3") # take limit off when not testing
 	for building in cur.fetchall():
 		building_id = int(building[0])
