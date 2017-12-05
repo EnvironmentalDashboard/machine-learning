@@ -109,9 +109,9 @@ def main():
 			print(len(x_train), len(y_train), x_train[0], y_train[0])
 			training_set = np.array(training_set, dtype=float)
 			test_set = np.array(test_set, dtype=float)
-			# training_set = np.reshape(training_set, (len(training_set), window_size, 1))
+			training_set = np.reshape(training_set, (len(training_set), window_size, 1))
 			# test_set = np.reshape(test_set, (len(test_set), window_size, 1))
 			model = create_model()
-			model.fit(training_set, actual_labels, batch_size=512, nb_epoch=epochs, validation_split=0.05, shuffle=False)
+			model.fit(x_train, y_train, batch_size=7, nb_epoch=epochs, validation_split=0.05, shuffle=False)
 
 main()
