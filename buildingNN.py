@@ -32,7 +32,7 @@ def onehot(value, list):
 	onehot_value[i] = 1
 	return onehot_value
 
-def create_model(layer1 = 1, layer2 = 50, layer3 = 100, layer4 = 1): # do neural net stuff
+def create_model(layer1 = 1, layer2 = 7, layer3 = 100, layer4 = 1): # do neural net stuff
 	model = Sequential()
 	model.add(LSTM(
 	input_shape=(layer2, layer1),
@@ -106,12 +106,17 @@ def main():
 			# training_set = normalize_windows(training_set)
 			# test_set = normalize_windows(test_set)
 			x_train, y_train = make_batches(7, training_set)
-			print(len(x_train), len(y_train), x_train[0], y_train[0])
-			training_set = np.array(training_set, dtype=float)
-			test_set = np.array(test_set, dtype=float)
+			# print(len(x_train), len(y_train), x_train[0], y_train[0])
+			x_train = np.array(x_train, dtype = float)
+			y_train = np.array(y_train, dtype = float)
+			# x_train = np.reshape(x_train, (len(x_train), window_size, 1))
+			# y_train = np.reshape(y_train, (len(y_train), window_size, 1))
+			# training_set = np.array(training_set, dtype=float)
+			# test_set = np.array(test_set, dtype=float)
 			# training_set = np.reshape(training_set, (len(training_set), window_size, 1))
 			# test_set = np.reshape(test_set, (len(test_set), window_size, 1))
-			model = create_model()
-			model.fit(training_set, actual_labels, batch_size=512, nb_epoch=epochs, validation_split=0.05, shuffle=False)
+			model = create_model(1, window_size, 100, 1)
+			model.fit(x_train, y_train, batch_size=512, nb_epoch=epochs, validation_split=0.05, shuffle=False)
+			print(len(model.predict(x_train)))
 
 main()
