@@ -6,7 +6,7 @@ import pymysql.cursors # install with `pip install PyMySQL`
 import tensorflow as tf
 import numpy as np
 from keras.models import Sequential
-from keras.layers import Dense, Dropout
+from keras.layers import Activation, Dense, Dropout
 from keras.layers import LSTM
 
 def create_time_list():
@@ -47,11 +47,14 @@ def create_model(layer1 = 1, layer2 = 50, layer3 = 100, layer4 = 1): # do neural
 	return model
 
 def normalize_windows(window_data):
-  normalised_data = []
-  for window in window_data:
-      normalised_window = [((float(p) / float(window[0])) - 1) for p in window]
-      normalised_data.append(normalised_window)
-  return normalised_data
+	normalised_data = []
+	for window in window_data:
+		try:
+			normalised_window = [((float(p) / float(window[0])) - 1) for p in window]
+		except ZeroDivisionError:
+			normalised_window = 0 # lol
+		normalised_data.append(normalised_window)
+	return normalised_data
 
 def main():
 	epochs = 1
@@ -81,6 +84,7 @@ def main():
 		test_set = []
 		training_set = []
 		current_resource = similar_meters[0]
+		actual_labels = []
 		for meter in similar_meters[1].items():
 			meter_id = meter[0]
 			meter_array = meter[1]
@@ -88,14 +92,18 @@ def main():
 				continue
 			for i in range(len(meter_array)-window_size):
 				if random.randint(0, 100) < 90:
-					training_set.append(normalize_windows(meter_array[i:i+window_size]))
+					training_set.append(meter_array[i:i+window_size])
 				else:
-					test_set.append(normalize_windows(meter_array[i:i+window_size]))
-			training_set = np.array(training_set)
-			test_set = np.array(test_set)
+					test_set.append(meter_array[i:i+window_size])
+			# training_set = normalize_windows(training_set)
+			# test_set = normalize_windows(test_set)
+			actual_labels.append(meter_array[i+window_size])
+			# print(training_set[0])
+			training_set = np.array(training_set, dtype=float)
+			test_set = np.array(test_set, dtype=float)
 			training_set = np.reshape(training_set, (len(training_set), window_size, 1))
 			test_set = np.reshape(test_set, (len(test_set), window_size, 1))
 			model = create_model()
-			model.fit(training_set, some_stuff, batch_size=512, nb_epoch=epochs, validation_split=0.05, shuffle=False)
+			model.fit(training_set, actual_labels, batch_size=512, nb_epoch=epochs, validation_split=0.05, shuffle=False)
 
 main()
