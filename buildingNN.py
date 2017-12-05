@@ -1,4 +1,5 @@
 import datetime
+import sys
 import config
 import pymysql.cursors # install with `pip install PyMySQL`
 import tensorflow as tf
@@ -54,6 +55,7 @@ def main():
 	cur = db.cursor()
 	cur.execute("SELECT id, resource FROM meters ORDER BY resource ASC") # we're going to build a seperate network for each resource type (e.g. electricity, water, gas, etc.)
 	current_resource = None
+	meter_index = 0
 	for meter in cur.fetchall():
 		if meter[1] != current_resource:
 			current_resource = meter[1]
@@ -64,31 +66,34 @@ def main():
 			val = data_point[0]
 			if val == None: # very few data points are null so just fill in the ones that are
 				val = last_point
-			instances[current_resource].append(val)
+			instances[current_resource][meter_index].append(val)
 			last_point = val
-			# instances.append([(meter[1]), data_point[0], onehot(datetime.datetime.fromtimestamp(int(data_point[1])).strftime('%m-%d'), timelist), building[1], building[2], building[3], onehot(building[4], building_types), onehot(meter[2], resources)])
+		meter_index += 1
 	db.close()
-	num_instances = len(instances)
-	training_size = int(num_instances/2)
-	window_size = int(num_instances/20)
-	for i in range(num_instances-window_size):
-		if i < training_size:
-			training_set.append(instances[i:i+window_size])
-		else:
-			test_set.append(instances[i:i+window_size])
-	training_set = np.array(training_set)
-	test_set = np.array(test_set)
-	training_set = np.reshape(training_set, (len(training_set), len(training_set[0]), 1))
-	test_set = np.reshape(test_set, (len(test_set), len(test_set[0]), 1))
-	print(training_set[0])
-	model = create_model()
-	model.fit(
-    X_train,
-    y_train,
-    batch_size=512,
-    nb_epoch=epochs,
-    validation_split=0.05,
-    shuffle=False)
+	for similar_meters in instances.items():
+		print(similar_meters)
+		sys.exit(0)
+		num_instances = len(instances)
+		training_size = int(num_instances/2)
+		window_size = int(num_instances/20)
+		for i in range(num_instances-window_size):
+			if i < training_size:
+				training_set.append(instances[i:i+window_size])
+			else:
+				test_set.append(instances[i:i+window_size])
+		training_set = np.array(training_set)
+		test_set = np.array(test_set)
+		training_set = np.reshape(training_set, (len(training_set), len(training_set[0]), 1))
+		test_set = np.reshape(test_set, (len(test_set), len(test_set[0]), 1))
+		print(training_set[0])
+		model = create_model()
+		model.fit(
+	    X_train,
+	    y_train,
+	    batch_size=512,
+	    nb_epoch=epochs,
+	    validation_split=0.05,
+	    shuffle=False)
 	# predictions = lstm.predict_sequences_multiple(model, X_test, seq_len, 50)
 
 main()
