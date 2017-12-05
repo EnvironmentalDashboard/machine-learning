@@ -1,5 +1,6 @@
 import datetime
 import sys
+import random
 import config
 import pymysql.cursors # install with `pip install PyMySQL`
 import tensorflow as tf
@@ -48,41 +49,41 @@ def create_model(layer1 = 1, layer2 = 50, layer3 = 100, layer4 = 1): # do neural
 def main():
 	epochs = 1
 	instances = {}
-	test_set = []
-	training_set = []
 	timelist = create_time_list()
 	db = pymysql.connect(host="67.205.179.187", port=3306, user=config.username, password=config.password, db="csci374")
 	cur = db.cursor()
-	cur.execute("SELECT id, resource FROM meters ORDER BY resource ASC") # we're going to build a seperate network for each resource type (e.g. electricity, water, gas, etc.)
+	cur.execute("SELECT id, resource FROM meters ORDER BY resource DESC LIMIT 3") # we're going to build a seperate network for each resource type (e.g. electricity, water, gas, etc.)
 	current_resource = None
-	meter_index = 0
 	for meter in cur.fetchall():
 		if meter[1] != current_resource:
 			current_resource = meter[1]
-			instances[current_resource] = []
+			instances[current_resource] = {}
+		instances[current_resource][meter[0]] = []
 		cur.execute("SELECT value, recorded FROM meter_data WHERE meter_id = %s ORDER BY recorded DESC", int(meter[0]))
 		last_point = 0
 		for data_point in cur.fetchall():
 			val = data_point[0]
 			if val == None: # very few data points are null so just fill in the ones that are
 				val = last_point
-			instances[current_resource][meter_index].append(val)
+			instances[current_resource][meter[0]].append(val)
 			last_point = val
-		meter_index += 1
 	db.close()
+	training_size = 90 # 90% training data
+	window_size = 7
 	for similar_meters in instances.items():
-		print(similar_meters)
-		sys.exit(0)
-		num_instances = len(instances)
-		training_size = int(num_instances/2)
-		window_size = int(num_instances/20)
-		for i in range(num_instances-window_size):
-			if i < training_size:
+		test_set = []
+		training_set = []
+		current_resource = similar_meters[0]
+		meter_array = similar_meters[1]
+		for i in range(len(meter_array)-window_size):
+			if ranom.randint(0, 100) < 90:
 				training_set.append(instances[i:i+window_size])
 			else:
 				test_set.append(instances[i:i+window_size])
 		training_set = np.array(training_set)
 		test_set = np.array(test_set)
+		print(training_set, test_set)
+		sys.exit(0)
 		training_set = np.reshape(training_set, (len(training_set), len(training_set[0]), 1))
 		test_set = np.reshape(test_set, (len(test_set), len(test_set[0]), 1))
 		print(training_set[0])
