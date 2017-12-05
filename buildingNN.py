@@ -46,6 +46,13 @@ def create_model(layer1 = 1, layer2 = 50, layer3 = 100, layer4 = 1): # do neural
 	model.compile(loss="mse", optimizer="rmsprop")
 	return model
 
+def normalize_windows(window_data):
+  normalised_data = []
+  for window in window_data:
+      normalised_window = [((float(p) / float(window[0])) - 1) for p in window]
+      normalised_data.append(normalised_window)
+  return normalised_data
+
 def main():
 	epochs = 1
 	instances = {}
@@ -59,7 +66,7 @@ def main():
 			current_resource = meter[1]
 			instances[current_resource] = {}
 		instances[current_resource][meter[0]] = []
-		cur.execute("SELECT value, recorded FROM meter_data WHERE meter_id = %s ORDER BY recorded DESC", int(meter[0]))
+		cur.execute("SELECT value FROM meter_data WHERE meter_id = %s ORDER BY recorded DESC", int(meter[0]))
 		last_point = 0
 		for data_point in cur.fetchall():
 			val = data_point[0]
@@ -74,27 +81,21 @@ def main():
 		test_set = []
 		training_set = []
 		current_resource = similar_meters[0]
-		meter_array = similar_meters[1]
-		for i in range(len(meter_array)-window_size):
-			if ranom.randint(0, 100) < 90:
-				training_set.append(instances[i:i+window_size])
-			else:
-				test_set.append(instances[i:i+window_size])
-		training_set = np.array(training_set)
-		test_set = np.array(test_set)
-		print(training_set, test_set)
-		sys.exit(0)
-		training_set = np.reshape(training_set, (len(training_set), len(training_set[0]), 1))
-		test_set = np.reshape(test_set, (len(test_set), len(test_set[0]), 1))
-		print(training_set[0])
-		model = create_model()
-		model.fit(
-		X_train,
-		y_train,
-		batch_size=512,
-		nb_epoch=epochs,
-		validation_split=0.05,
-		shuffle=False)
-	# predictions = lstm.predict_sequences_multiple(model, X_test, seq_len, 50)
+		for meter in similar_meters[1].items():
+			meter_id = meter[0]
+			meter_array = meter[1]
+			if len(meter_array) <= window_size:
+				continue
+			for i in range(len(meter_array)-window_size):
+				if random.randint(0, 100) < 90:
+					training_set.append(normalize_windows(meter_array[i:i+window_size]))
+				else:
+					test_set.append(normalize_windows(meter_array[i:i+window_size]))
+			training_set = np.array(training_set)
+			test_set = np.array(test_set)
+			training_set = np.reshape(training_set, (len(training_set), window_size, 1))
+			test_set = np.reshape(test_set, (len(test_set), window_size, 1))
+			model = create_model()
+			model.fit(training_set, some_stuff, batch_size=512, nb_epoch=epochs, validation_split=0.05, shuffle=False)
 
 main()
