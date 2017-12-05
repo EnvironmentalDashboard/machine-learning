@@ -56,6 +56,11 @@ def normalize_windows(window_data):
 		normalised_data.append(normalised_window)
 	return normalised_data
 
+def make_batches(batch_size, data_set):
+	x = [data_set[i:batch_size+i] for i in range(0, len(data_set) - batch_size)]
+	y = [data_set[batch_size+i] for i in range(0, len(data_set) - batch_size)]
+	return x, y
+
 def main():
 	epochs = 1
 	instances = {}
@@ -92,17 +97,20 @@ def main():
 				continue
 			for i in range(len(meter_array)-window_size):
 				if random.randint(0, 100) < 90:
-					training_set.append(meter_array[i:i+window_size])
+					for tmp in meter_array[i:(i+window_size-1)]:
+						training_set.append([tmp])
 				else:
-					test_set.append(meter_array[i:i+window_size])
+					for tmp in meter_array[i:(i+window_size-1)]:
+						test_set.append([tmp])
+				actual_labels.append(meter_array[i+window_size])
 			# training_set = normalize_windows(training_set)
 			# test_set = normalize_windows(test_set)
-			actual_labels.append(meter_array[i+window_size])
-			# print(training_set[0])
+			x_train, y_train = make_batches(7, training_set)
+			print(len(x_train), len(y_train), x_train[0], y_train[0])
 			training_set = np.array(training_set, dtype=float)
 			test_set = np.array(test_set, dtype=float)
-			training_set = np.reshape(training_set, (len(training_set), window_size, 1))
-			test_set = np.reshape(test_set, (len(test_set), window_size, 1))
+			# training_set = np.reshape(training_set, (len(training_set), window_size, 1))
+			# test_set = np.reshape(test_set, (len(test_set), window_size, 1))
 			model = create_model()
 			model.fit(training_set, actual_labels, batch_size=512, nb_epoch=epochs, validation_split=0.05, shuffle=False)
 
