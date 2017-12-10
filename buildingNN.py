@@ -1,5 +1,6 @@
 import datetime
 import sys
+import os
 import random
 import config
 import pymysql.cursors
@@ -70,11 +71,9 @@ def plot_results_multiple(predicted_data, true_data, prediction_len):
     plt.show()
 
 
-def download_data():
+def query_db(cur):
     # load data from database
     instances = {}
-    db = pymysql.connect(host="67.205.179.187", port=3306, user=config.username, password=config.password, db="csci374")
-    cur = db.cursor()
     cur.execute("SELECT id FROM meters LIMIT 3") # we're going to build a seperate network for each meter
     for meter in cur.fetchall():
         instances[meter[0]] = []
@@ -86,9 +85,7 @@ def download_data():
                 val = last_point
             instances[meter[0]].append(val)
             last_point = val
-        # print('This is meter %s'%meter[0], len(instances[current_resource][meter[0]]), instances[current_resource][meter[0]])
-    db.close()
-    print('===========instances=================', instances)
+    # db.close()
     return instances
 
 def normalize_data(data):
@@ -131,8 +128,11 @@ def build_train_and_test_data(data, window_size, training_pct):
 def main():
     epochs = 1
     window_size = 24
-    instances = download_data()
-    print(len(instances), len(instances[1]))
+    db = pymysql.connect(host="67.205.179.187", port=3306, user=config.username, password=config.password, db="csci374", autocommit=True)
+    cur = db.cursor()
+    instances = query_db(cur)
+    # print(len(instances), len(instances[1]))
+    path = os.getcwd()
     for meter in instances.items():
         print("Processing meter", meter[0])
         if len(meter[1]) == 0:
@@ -147,6 +147,10 @@ def main():
         # print(len(x_test), len(y_test), len(predictions))
         plot_results_multiple(predictions, y_test, window_size)
         print('Accuracy/Mean Squared Error: ', model.evaluate(x_test, y_test))
+        model_json = model.to_json()
+        # serialize weights to HDF5
+        model.save_weights(path + "/model.h5")
+        cur.execute("INSERT INTO models (model, weights) VALUES (%s, %s)", (model_json, open(path + "/model.h5", "rb").read()))
 
 
 main()
