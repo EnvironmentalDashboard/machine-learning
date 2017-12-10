@@ -143,11 +143,7 @@ def main():
 
         model = create_model(1, window_size, 100, 1)
 
-<<<<<<< HEAD
-        model.fit(x_train, y_train, batch_size=window_size, nb_epoch=epochs, validation_split=0.05, shuffle=True)
-=======
         model.fit(x_train, y_train, batch_size=32, epochs=epochs, validation_split=0.1, shuffle=True)
->>>>>>> 0f939d09ca1ff2a20014659f740e13e9c5c45c78
         predictions = predict_sequences_multiple(model, x_test, window_size, window_size)
         # print(len(x_test), len(y_test), len(predictions))
         plot_results_multiple(predictions, y_test, window_size)
