@@ -2,15 +2,14 @@ import datetime
 import sys
 import random
 import config
-import pymysql.cursors  # install with `pip install PyMySQL`
+import pymysql.cursors
 import tensorflow as tf
 import numpy as np
+import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 from pandas import Series
-from keras.models import Sequential
-from keras.layers import Activation, Dense, Dropout
-from keras.layers import LSTM
-import matplotlib.pyplot as plt
+from keras.models import Sequential, model_from_json
+from keras.layers import Activation, Dense, Dropout, LSTM
 
 def create_model(layer1, layer2, layer3, layer4):  # do neural net stuff
     model = Sequential()
