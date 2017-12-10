@@ -122,11 +122,12 @@ def download_data():
 def normalize_data(data):
     series = Series(data)
     series_values = series.values
-    value
-
-
-
-
+    series_values = series_values.reshape((len(series_values), 1))
+    # train the normalization
+    scaler = StandardScaler()
+    scaler = scaler.fit(series_values)
+    standardized = scaler.transform(series_values)
+    return standardized
 
 def build_train_and_test_data(data, window_size, training_pct):
     test_set = []
@@ -137,13 +138,13 @@ def build_train_and_test_data(data, window_size, training_pct):
     for i in range(len(meter_array) - window_size):
         if random.randint(0, 100) < training_pct:
             for tmp in meter_array[i:(i + window_size - 1)]:
-                training_set.append([tmp])
+                training_set.append(tmp)
         else:
             for tmp in meter_array[i:(i + window_size - 1)]:
-                test_set.append([tmp])
+                test_set.append(tmp)
         actual_labels.append(meter_array[i + window_size])
-        # training_set = normalize_windows(training_set)
-        # test_set = normalize_windows(test_set)
+    training_set = normalize_data(training_set)
+    test_set = normalize_data(test_set)
     x_train, y_train = make_batches(window_size, training_set)
     x_test, y_test = make_batches(window_size, test_set)
 
@@ -172,10 +173,6 @@ def main():
         model.fit(x_train, y_train, batch_size=512, nb_epoch=epochs, validation_split=0.05, shuffle=False)
         predictions = predict_sequences_multiple(model, x_test, window_size, window_size)
         # print(len(x_test), len(y_test), len(predictions))
-<<<<<<< HEAD
-        print('got there')
-=======
->>>>>>> 21a66685c72fb5e2b16bd7981e30f5fdc7999062
         plot_results_multiple(predictions, y_test, window_size)
 
 
