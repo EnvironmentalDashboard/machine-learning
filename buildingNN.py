@@ -118,7 +118,7 @@ def download_data():
     return instances
 
 
-def build_train_and_test_data(similar_meters, window_size):
+def build_train_and_test_data(data, window_size):
     test_set = []
     training_set = []
     actual_labels = []
@@ -159,9 +159,9 @@ def main():
         model = create_model(1, window_size, 100, 1)
 
         model.fit(x_train, y_train, batch_size=512, nb_epoch=epochs, validation_split=0.05, shuffle=False)
-        predictions = predict_sequences_multiple(model, x_test, window_size, 7)
+        predictions = predict_sequences_multiple(model, x_test, window_size, 30)
         # print(len(x_test), len(y_test), len(predictions))
-        plot_results_multiple(predictions, y_test, 7)
+        plot_results_multiple(predictions, y_test, 30)
 
 
 main()
