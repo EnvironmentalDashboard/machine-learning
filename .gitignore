@@ -3,3 +3,5 @@ bos/credentials.php
 config.py
 .DS_Store
 __pycache__
+*.h5
+*.json
