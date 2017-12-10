@@ -5,6 +5,7 @@ import config
 import pymysql.cursors  # install with `pip install PyMySQL`
 import tensorflow as tf
 import numpy as np
+from sklearn.preprocessing import StandardScaler
 from keras.models import Sequential
 from keras.layers import Activation, Dense, Dropout
 from keras.layers import LSTM
@@ -101,7 +102,7 @@ def download_data():
     db = pymysql.connect(host="67.205.179.187", port=3306, user=config.username, password=config.password, db="csci374")
     cur = db.cursor()
     cur.execute(
-        "SELECT id, resource FROM meters ORDER BY resource DESC LIMIT 3")  # we're going to build a seperate network for each resource type (e.g. electricity, water, gas, etc.)
+        "SELECT id, resource FROM meters ORDER BY resource DESC LIMIT 1")  # we're going to build a seperate network for each resource type (e.g. electricity, water, gas, etc.)
     current_resource = None
     for meter in cur.fetchall():
         if meter[1] != current_resource:
@@ -116,16 +117,18 @@ def download_data():
                 val = last_point
             instances[current_resource][meter[0]].append(val)
             last_point = val
+        # print('This is meter %s'%meter[0], len(instances[current_resource][meter[0]]), instances[current_resource][meter[0]])
     db.close()
+    print('===========instances=================', instances)
     return instances
 
 
-def build_train_and_test_data(data, window_size):
+def build_train_and_test_data(similar_meters, window_size):
     test_set = []
     training_set = []
-    current_resource = data[0]
+    current_resource = similar_meters[0]
     actual_labels = []
-    for meter in data[1].items():
+    for meter in similar_meters[1].items():
         meter_id = meter[0]
         meter_array = meter[1]
         if len(meter_array) <= window_size:
@@ -153,7 +156,7 @@ def build_train_and_test_data(data, window_size):
 
 def main():
     epochs = 1
-    window_size = 7
+    window_size = 30
     instances = download_data()
     for similar_meters in instances.items():
         x_train, y_train, x_test, y_test = build_train_and_test_data(similar_meters, window_size)
