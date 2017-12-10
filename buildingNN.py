@@ -97,14 +97,14 @@ def plot_results_multiple(predicted_data, true_data, prediction_len):
 
 
 def download_data():
-    # load data from BuildingOS
+    # load data from database
     instances = {}
     db = pymysql.connect(host="67.205.179.187", port=3306, user=config.username, password=config.password, db="csci374")
     cur = db.cursor()
-    cur.execute("SELECT id FROM meters ORDER BY RAND() LIMIT 3") # we're going to build a seperate network for each meter
+    cur.execute("SELECT id FROM meters LIMIT 3") # we're going to build a seperate network for each meter
     for meter in cur.fetchall():
         instances[meter[0]] = []
-        cur.execute("SELECT value FROM meter_data WHERE meter_id = %s ORDER BY recorded DESC", int(meter[0]))
+        cur.execute("SELECT value FROM meter_data WHERE meter_id = %s AND resolution = 'hour' ORDER BY recorded DESC", int(meter[0]))
         last_point = 0
         for data_point in cur.fetchall():
             val = data_point[0]
@@ -147,7 +147,7 @@ def build_train_and_test_data(data, window_size):
 
 def main():
     epochs = 1
-    window_size = 30
+    window_size = 24
     instances = download_data()
     for meter in instances.items():
         print("Processing meter", meter[0])
