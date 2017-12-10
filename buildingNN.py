@@ -71,7 +71,7 @@ def make_batches(batch_size, data_set):
 def predict_sequences_multiple(model, data, window_size, prediction_len):
     # Predict sequence of 50 steps before shifting prediction run forward by 50 steps
     prediction_seqs = []
-    print('length of data', len(data), len(data[0]), '\n=========data=======\n', data)
+    # print('length of data', len(data), len(data[0]), '\n=========data=======\n', data)
     for i in range(int(len(data) / prediction_len)):
         curr_frame = data[i * prediction_len]
         predicted = []
@@ -100,21 +100,16 @@ def download_data():
     instances = {}
     db = pymysql.connect(host="67.205.179.187", port=3306, user=config.username, password=config.password, db="csci374")
     cur = db.cursor()
-    cur.execute(
-        "SELECT id, resource FROM meters ORDER BY resource DESC LIMIT 3")  # we're going to build a seperate network for each resource type (e.g. electricity, water, gas, etc.)
-    current_resource = None
+    cur.execute("SELECT id FROM meters ORDER BY RAND() LIMIT 3") # we're going to build a seperate network for each meter
     for meter in cur.fetchall():
-        if meter[1] != current_resource:
-            current_resource = meter[1]
-            instances[current_resource] = {}
-        instances[current_resource][meter[0]] = []
+        instances[meter[0]] = []
         cur.execute("SELECT value FROM meter_data WHERE meter_id = %s ORDER BY recorded DESC", int(meter[0]))
         last_point = 0
         for data_point in cur.fetchall():
             val = data_point[0]
             if val == None:  # very few data points are null so just fill in the ones that are
                 val = last_point
-            instances[current_resource][meter[0]].append(val)
+            instances[meter[0]].append(val)
             last_point = val
     db.close()
     return instances
@@ -123,21 +118,17 @@ def download_data():
 def build_train_and_test_data(data, window_size):
     test_set = []
     training_set = []
-    current_resource = data[0]
     actual_labels = []
-    for meter in data[1].items():
-        meter_id = meter[0]
-        meter_array = meter[1]
-        if len(meter_array) <= window_size:
-            continue
-        for i in range(len(meter_array) - window_size):
-            if random.randint(0, 100) < 90:
-                for tmp in meter_array[i:(i + window_size - 1)]:
-                    training_set.append([tmp])
-            else:
-                for tmp in meter_array[i:(i + window_size - 1)]:
-                    test_set.append([tmp])
-            actual_labels.append(meter_array[i + window_size])
+    meter_id = data[0]
+    meter_array = data[1]
+    for i in range(len(meter_array) - window_size):
+        if random.randint(0, 100) < 90:
+            for tmp in meter_array[i:(i + window_size - 1)]:
+                training_set.append([tmp])
+        else:
+            for tmp in meter_array[i:(i + window_size - 1)]:
+                test_set.append([tmp])
+        actual_labels.append(meter_array[i + window_size])
         # training_set = normalize_windows(training_set)
         # test_set = normalize_windows(test_set)
     x_train, y_train = make_batches(window_size, training_set)
@@ -155,14 +146,18 @@ def main():
     epochs = 1
     window_size = 7
     instances = download_data()
-    for similar_meters in instances.items():
-        x_train, y_train, x_test, y_test = build_train_and_test_data(similar_meters, window_size)
+    for meter in instances.items():
+        print("Processing meter", meter[0])
+        if len(meter[1]) == 0:
+            print(meter[0], "has no data")
+            continue
+        x_train, y_train, x_test, y_test = build_train_and_test_data(meter, window_size)
 
         model = create_model(1, window_size, 100, 1)
 
         model.fit(x_train, y_train, batch_size=512, nb_epoch=epochs, validation_split=0.05, shuffle=False)
         predictions = predict_sequences_multiple(model, x_test, window_size, 7)
-        print(len(x_test), len(y_test), len(predictions))
+        # print(len(x_test), len(y_test), len(predictions))
         plot_results_multiple(predictions, y_test, 7)
 
 
