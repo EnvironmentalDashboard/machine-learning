@@ -6,6 +6,7 @@ import pymysql.cursors  # install with `pip install PyMySQL`
 import tensorflow as tf
 import numpy as np
 from sklearn.preprocessing import StandardScaler
+from pandas import Series
 from keras.models import Sequential
 from keras.layers import Activation, Dense, Dropout
 from keras.layers import LSTM
@@ -93,6 +94,7 @@ def plot_results_multiple(predicted_data, true_data, prediction_len):
         padding = [None for p in range(i * prediction_len)]
         plt.plot(padding + data, label='Prediction')
         # plt.legend()
+        print('I am plotting!')
     plt.show()
 
 
@@ -116,6 +118,14 @@ def download_data():
     db.close()
     print('===========instances=================', instances)
     return instances
+
+def normalize_data(data):
+    series = Series(data)
+    series_values = series.values
+    value
+
+
+
 
 
 def build_train_and_test_data(data, window_size):
@@ -149,6 +159,7 @@ def main():
     epochs = 1
     window_size = 24
     instances = download_data()
+    print(len(instances), len(instances[1]))
     for meter in instances.items():
         print("Processing meter", meter[0])
         if len(meter[1]) == 0:
@@ -159,9 +170,10 @@ def main():
         model = create_model(1, window_size, 100, 1)
 
         model.fit(x_train, y_train, batch_size=512, nb_epoch=epochs, validation_split=0.05, shuffle=False)
-        predictions = predict_sequences_multiple(model, x_test, window_size, 30)
+        predictions = predict_sequences_multiple(model, x_test, window_size, window_size)
         # print(len(x_test), len(y_test), len(predictions))
-        plot_results_multiple(predictions, y_test, 30)
+        print('got there')
+        plot_results_multiple(predictions, y_test, window_size)
 
 
 main()
