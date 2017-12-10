@@ -225,7 +225,7 @@ class BuildingOS {
     $stmt = $this->db->prepare('SELECT recorded FROM meter_data
       WHERE meter_id = ? AND resolution = ? ORDER BY recorded DESC LIMIT 1');
     $stmt->execute(array($meter_id, $res));
-    $last_recording = ($stmt->rowCount() === 1) ? $stmt->fetchColumn() : strtotime('-4 years'); // start date
+    $last_recording = ($stmt->rowCount() === 1) ? $stmt->fetchColumn() : strtotime('-2 years'); // start date
     $diff = $time - $last_recording;
     if ($diff > $chunk) {
       $meter_data = array();
