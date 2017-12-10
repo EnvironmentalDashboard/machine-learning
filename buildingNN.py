@@ -26,26 +26,13 @@ def create_model(layer1, layer2, layer3, layer4):  # do neural net stuff
     model.compile(loss="mse", optimizer="adam")
     return model
 
-
-def normalize_windows(window_data):
-    normalised_data = []
-    for window in window_data:
-        try:
-            normalised_window = [((float(p) / float(window[0])) - 1) for p in window]
-        except ZeroDivisionError:
-            normalised_window = 0  # lol
-        normalised_data.append(normalised_window)
-    return normalised_data
-
-
 def make_batches(batch_size, data_set):
     x = [data_set[i:batch_size + i] for i in range(0, len(data_set) - batch_size)]
     y = [data_set[batch_size + i] for i in range(0, len(data_set) - batch_size)]
     return x, y
 
-
 def predict_sequences_multiple(model, data, window_size, prediction_len):
-    # Predict sequence of 50 steps before shifting prediction run forward by 50 steps
+    # Predict sequence of window_size steps before shifting prediction run forward by window_size steps
     prediction_seqs = []
     # print('length of data', len(data), len(data[0]), '\n=========data=======\n', data)
     for i in range(int(len(data) / prediction_len)):
@@ -73,6 +60,7 @@ def plot_results_multiple(predicted_data, true_data, prediction_len):
 
 def query_db(cur):
     # load data from database
+    # REMEMBER TO REMOVE LIMITs IN FINAL CODE!!!
     instances = {}
     cur.execute("SELECT id FROM meters LIMIT 3") # we're going to build a seperate network for each meter
     for meter in cur.fetchall():
@@ -85,7 +73,6 @@ def query_db(cur):
                 val = last_point
             instances[meter[0]].append(val)
             last_point = val
-    # db.close()
     return instances
 
 def normalize_data(data):
@@ -148,9 +135,9 @@ def main():
         plot_results_multiple(predictions, y_test, window_size)
         print('Accuracy/Mean Squared Error: ', model.evaluate(x_test, y_test))
         model_json = model.to_json()
-        # serialize weights to HDF5
-        model.save_weights(path + "/model.h5")
-        cur.execute("INSERT INTO models (model, weights) VALUES (%s, %s)", (model_json, open(path + "/model.h5", "rb").read()))
-
+        model.save_weights(path + "/model.h5") # serialize weights to HDF5 to read from later
+        cur.execute("INSERT INTO models (meter_id, model, weights) VALUES (%s, %s, %s)", (meter[0], model_json, open(path + "/model.h5", "rb").read()))
+    os.remove(path + "/model.h5")
+    db.close()
 
 main()
