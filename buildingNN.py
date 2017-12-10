@@ -12,32 +12,6 @@ from keras.layers import Activation, Dense, Dropout
 from keras.layers import LSTM
 import matplotlib.pyplot as plt
 
-
-def create_time_list():
-    timelist = []
-    for month in range(1, 13):
-        for day in range(1, 32):
-            if month < 10:
-                if day < 10:
-                    time = '0' + str(month) + '-' + '0' + str(day)
-                else:
-                    time = '0' + str(month) + '-' + str(day)
-            else:
-                if day < 10:
-                    time = str(month) + '-' + '0' + str(day)
-                else:
-                    time = str(month) + '-' + str(day)
-            timelist.append(time)
-    return timelist
-
-
-def onehot(value, list):
-    onehot_value = [0] * len(list)
-    i = list.index(value)
-    onehot_value[i] = 1
-    return onehot_value
-
-
 def create_model(layer1, layer2, layer3, layer4):  # do neural net stuff
     model = Sequential()
     model.add(LSTM(
@@ -170,7 +144,7 @@ def main():
 
         model = create_model(1, window_size, 100, 1)
 
-        model.fit(x_train, y_train, batch_size=512, nb_epoch=epochs, validation_split=0.05, shuffle=False)
+        model.fit(x_train, y_train, batch_size=32, epochs=epochs, validation_split=0.1, shuffle=True)
         predictions = predict_sequences_multiple(model, x_test, window_size, window_size)
         # print(len(x_test), len(y_test), len(predictions))
         plot_results_multiple(predictions, y_test, window_size)
