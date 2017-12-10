@@ -67,7 +67,6 @@ def plot_results_multiple(predicted_data, true_data, prediction_len):
         padding = [None for p in range(i * prediction_len)]
         plt.plot(padding + data, label='Prediction')
         # plt.legend()
-        print('I am plotting!')
     plt.show()
 
 
@@ -79,7 +78,7 @@ def download_data():
     cur.execute("SELECT id FROM meters LIMIT 3") # we're going to build a seperate network for each meter
     for meter in cur.fetchall():
         instances[meter[0]] = []
-        cur.execute("SELECT value FROM meter_data WHERE meter_id = %s AND resolution = 'hour' ORDER BY recorded DESC LIMIT 500", int(meter[0]))
+        cur.execute("SELECT value FROM meter_data WHERE meter_id = %s AND resolution = 'hour' ORDER BY recorded DESC LIMIT 1000", int(meter[0]))
         last_point = 0
         for data_point in cur.fetchall():
             val = data_point[0]
@@ -147,6 +146,7 @@ def main():
         predictions = predict_sequences_multiple(model, x_test, window_size, window_size)
         # print(len(x_test), len(y_test), len(predictions))
         plot_results_multiple(predictions, y_test, window_size)
+        print('Accuracy/Mean Squared Error: ', model.evaluate(x_test, y_test))
 
 
 main()
