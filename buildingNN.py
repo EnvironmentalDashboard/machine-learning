@@ -63,7 +63,7 @@ def query_db(cur):
     # load data from database
     # REMEMBER TO REMOVE LIMITs IN FINAL CODE!!!
     instances = {}
-    cur.execute("SELECT id FROM meters LIMIT 3") # we're going to build a seperate network for each meter
+    cur.execute("SELECT id FROM meters ORDER BY RAND() LIMIT 3") # we're going to build a seperate network for each meter
     for meter in cur.fetchall():
         instances[meter[0]] = []
         cur.execute("SELECT value FROM meter_data WHERE meter_id = %s AND resolution = 'hour' ORDER BY recorded DESC LIMIT 1000", int(meter[0]))
@@ -131,8 +131,6 @@ def main():
         model = create_model(1, window_size, 100, 1)
 
         model.fit(x_train, y_train, batch_size=32, epochs=epochs, validation_split=0.1, shuffle=True)
-        print(x_test, window_size)
-        sys.exit(0)
         predictions = predict_sequences_multiple(model, x_test, window_size)
         # print(len(x_test), len(y_test), len(predictions))
         plot_results_multiple(predictions, y_test, window_size)
