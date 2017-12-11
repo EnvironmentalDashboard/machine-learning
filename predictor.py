@@ -33,12 +33,13 @@ def main():
     loaded_model = model_from_json(result[0])
     loaded_model.load_weights(path + "/tmp.h5")
     loaded_model.compile(loss="mse", optimizer="adam")
-    predictions = buildingNN.predict_sequences_multiple(loaded_model, x_test, chosen_res, chosen_res)
     # grab most recent data
-    cur.execute("SELECT value FROM meter_data WHERE meter_id = %s AND resolution = %s ORDER BY recorded DESC LIMIT %s", (meter_id, res, choose_res(res)))
+    window_size = choose_res(res)
+    cur.execute("SELECT value FROM meter_data WHERE meter_id = %s AND resolution = %s ORDER BY recorded DESC LIMIT %s", (meter_id, res, window_size))
     window = []
     for data_point in cur.fetchall():
         window.append(data_point[0])
+    predictions = buildingNN.predict_sequences_multiple(loaded_model, window, window_size, window_size)
 
 if __name__ == "__main__":
     main()
