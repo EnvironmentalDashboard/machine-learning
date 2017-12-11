@@ -8,14 +8,6 @@ from keras.models import Sequential, model_from_json
 from keras.layers import Activation, Dense, Dropout, LSTM
 import buildingNN
 
-def window_size(resolution):
-    if resolution == 'day':
-        return 7
-    if resolution == 'hour':
-        return 24
-    else:
-        return 10
-
 #argv[1] = meter_id, argv[2] = resolution
 def main():
     if len(sys.argv) != 3:
@@ -35,30 +27,9 @@ def main():
     loaded_model.load_weights(path + "/tmp.h5")
     loaded_model.compile(loss="mse", optimizer="adam")
     # grab most recent data
-    window_size = window_size(res)
+    window_size = choose_res(res)
     cur.execute("SELECT value FROM meter_data WHERE meter_id = %s AND resolution = %s ORDER BY recorded DESC LIMIT %s", (meter_id, res, window_size))
-    # print("SELECT value FROM meter_data WHERE meter_id = %s AND resolution = %s ORDER BY recorded DESC LIMIT %s" %(meter_id, res, window_size))
-    window = [[]]
-    last_point = 0
-    for data_point in cur.fetchall():
-        val = data_point[0]
-        if val == None:
-            val = last_point
-        window[0].append(val)
-        last_point = val
-    window[0].pop(0)
-    window[0].append(1.2)
-    newlist = list(window[0])
-    newlist[-1] = 18
-    # window.append(newlist)
-    print(window)
-    window[0] = buildingNN.normalize_data(window[0])
-    # window[1] = buildingNN.normalize_data(window[1])
-    window = np.array(window, dtype=float)
-    print('===========loaded model===========', loaded_model)
-    prediction = loaded_model.predcit()
-    # predictions = buildingNN.predict_sequences_multiple(loaded_model, window, window_size)
-    print(len(window[0]), window, prediction)
+
 
 if __name__ == "__main__":
     main()
