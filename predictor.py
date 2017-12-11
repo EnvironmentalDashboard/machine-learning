@@ -46,17 +46,9 @@ def main():
             val = last_point
         window[0].append(val)
         last_point = val
-    window[0].pop(0)
-    window[0].append(1.2)
-    newlist = list(window[0])
-    newlist[-1] = 18
-    # window.append(newlist)
-    print(window)
     window[0] = buildingNN.normalize_data(window[0])
-    # window[1] = buildingNN.normalize_data(window[1])
     window = np.array(window, dtype=float)
-    print('===========loaded model===========', loaded_model)
-    prediction = loaded_model.predcit()
+    prediction = loaded_model.predict(window)
     # predictions = buildingNN.predict_sequences_multiple(loaded_model, window, window_size)
     print(len(window[0]), window, prediction)
 
