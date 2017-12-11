@@ -140,4 +140,5 @@ def main():
     os.remove(path + "/model.h5")
     db.close()
 
-main()
+if __name__ == '__main__':
+    main()
