@@ -40,6 +40,7 @@ def predict_sequences_multiple(model, data, window_size):
         predicted = []
         for j in range(window_size):
             predicted.append(model.predict(curr_frame[np.newaxis, :, :])[0, 0])
+            print('===========curr_frame===========', curr_frame)
             curr_frame = curr_frame[1:]
             curr_frame = np.insert(curr_frame, [window_size - 1], predicted[-1], axis=0)
         prediction_seqs.append(predicted)
