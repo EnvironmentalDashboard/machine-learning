@@ -46,6 +46,7 @@ def main():
             val = last_point
         window[0].append(val)
         last_point = val
+    print(window)
     window[0] = buildingNN.normalize_data(window[0])
     window = np.array(window, dtype=float)
     prediction = loaded_model.predict(window)
