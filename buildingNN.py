@@ -59,14 +59,14 @@ def plot_results_multiple(predicted_data, true_data, prediction_len):
     plt.show()
 
 
-def query_db(cur):
+def query_db(cur, res):
     # load data from database
     # REMEMBER TO REMOVE LIMITs IN FINAL CODE!!!
     instances = {}
     cur.execute("SELECT id FROM meters ORDER BY RAND() LIMIT 3") # we're going to build a seperate network for each meter
     for meter in cur.fetchall():
         instances[meter[0]] = []
-        cur.execute("SELECT value FROM meter_data WHERE meter_id = %s AND resolution = 'hour' ORDER BY recorded DESC LIMIT 1000", int(meter[0]))
+        cur.execute("SELECT value FROM meter_data WHERE meter_id = %s AND resolution = %s ORDER BY recorded DESC LIMIT 1000", int(meter[0], res))
         last_point = 0
         for data_point in cur.fetchall():
             val = data_point[0]
@@ -112,13 +112,24 @@ def build_train_and_test_data(data, window_size, training_pct):
 
     return x_train, y_train, x_test, y_test
 
+def window_size(resolution):
+    if resolution == 'day':
+        return 7
+    if resolution == 'hour':
+        return 24
+    else:
+        return 10
 
 def main():
+    if len(sys.argv) != 2:
+        print("Please provide a meter ID as a command line argument")
+        sys.exit(0)
     epochs = 1
-    window_size = 24
+    res = sys.argv[1]
+    window_size = window_size(res)
     db = pymysql.connect(host="67.205.179.187", port=3306, user=config.username, password=config.password, db="csci374", autocommit=True)
     cur = db.cursor()
-    instances = query_db(cur)
+    instances = query_db(cur, res)
     # print(len(instances), len(instances[1]))
     path = os.getcwd()
     for meter in instances.items():
@@ -138,7 +149,10 @@ def main():
         model_json = model.to_json()
         model.save_weights(path + "/model.h5") # serialize weights to HDF5 to read from later
         cur.execute("INSERT INTO models (meter_id, model, weights) VALUES (%s, %s, %s)", (meter[0], model_json, open(path + "/model.h5", "rb").read()))
-    os.remove(path + "/model.h5")
+    try:
+        os.remove(path + "/model.h5")
+    except OSError:
+        pass
     db.close()
 
 if __name__ == '__main__':
