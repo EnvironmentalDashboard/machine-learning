@@ -54,6 +54,7 @@ def main():
     window[0] = buildingNN.normalize_data(window[0])
     # window[1] = buildingNN.normalize_data(window[1])
     window = np.array(window, dtype=float)
+    print('===========loaded model===========', loaded_model)
     prediction = loaded_model.predcit()
     # predictions = buildingNN.predict_sequences_multiple(loaded_model, window, window_size)
     print(len(window[0]), window, prediction)
