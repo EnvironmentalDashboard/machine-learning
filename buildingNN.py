@@ -1,3 +1,7 @@
+"""
+Will build models for all meters using data that defaults to hour resolution but can be specified via the first command line arguemnt
+If a second command line option is given, the program will chart the data and prediction using matplotlib
+"""
 import datetime
 import sys
 import os
@@ -16,12 +20,12 @@ def create_model(layer1, layer2, layer3, layer4):  # do neural net stuff
     model = Sequential()
     model.add(LSTM(
         input_shape=(layer2, layer1),
-        output_dim=layer2,
+        units=layer2,
         return_sequences=True))
     model.add(Dropout(0.2))
     model.add(LSTM(layer3, return_sequences=False))
     model.add(Dropout(0.2))
-    model.add(Dense(output_dim=layer4))
+    model.add(Dense(units=layer4))
     model.add(Activation("linear"))
     model.compile(loss="mse", optimizer="adam")
     return model
@@ -121,17 +125,23 @@ def windowSize(resolution):
         return 10
 
 def main():
-    if len(sys.argv) != 2:
-        print("Please provide a resolution as a command line argument")
-        sys.exit(0)
+    args = len(sys.argv)
     epochs = 1
-    res = sys.argv[1]
+    path = os.getcwd()
+    if args == 1:
+        res = 'hour'
+        chart = False
+    elif args == 2:
+        res = sys.argv[1]
+        chart = False
+    else:
+        res = sys.argv[1]
+        chart = True
     window_size = windowSize(res)
     db = pymysql.connect(host="67.205.179.187", port=3306, user=config.username, password=config.password, db="csci374", autocommit=True)
     cur = db.cursor()
     instances = query_db(cur, res)
     # print(len(instances), len(instances[1]))
-    path = os.getcwd()
     for meter in instances.items():
         print("Processing meter", meter[0])
         if len(meter[1]) == 0:
@@ -142,13 +152,16 @@ def main():
         model = create_model(1, window_size, 100, 1)
 
         model.fit(x_train, y_train, batch_size=32, epochs=epochs, validation_split=0.1, shuffle=True)
-        predictions = predict_sequences_multiple(model, x_test, window_size)
-        # print(len(x_test), len(y_test), len(predictions))
-        plot_results_multiple(predictions, y_test, window_size)
-        print('Accuracy/Mean Squared Error: ', model.evaluate(x_test, y_test))
+        if chart:
+            predictions = predict_sequences_multiple(model, x_test, window_size)
+            # print(len(x_test), len(y_test), len(predictions))
+            plot_results_multiple(predictions, y_test, window_size)
+        accuracy = model.evaluate(x_test, y_test)
+        print('Accuracy/Mean Squared Error: ', accuracy)
+        # See https://machinelearningmastery.com/save-load-keras-deep-learning-models/
         model_json = model.to_json()
         model.save_weights(path + "/model.h5") # serialize weights to HDF5 to read from later
-        cur.execute("INSERT INTO models (meter_id, res, model, weights) VALUES (%s, %s, %s, %s)", (meter[0], res, model_json, open(path + "/model.h5", "rb").read()))
+        cur.execute("INSERT INTO models (meter_id, res, model, weights, accuracy) VALUES (%s, %s, %s, %s, %s)", (meter[0], res, model_json, open(path + "/model.h5", "rb").read(), np.asscalar(accuracy)))
     try:
         os.remove(path + "/model.h5")
     except OSError:
