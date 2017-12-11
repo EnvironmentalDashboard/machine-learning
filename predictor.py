@@ -3,6 +3,7 @@ import sys
 import os
 import pymysql.cursors
 import tensorflow as tf
+import numpy as np
 from keras.models import Sequential, model_from_json
 from keras.layers import Activation, Dense, Dropout, LSTM
 import buildingNN
@@ -36,10 +37,17 @@ def main():
     # grab most recent data
     window_size = choose_res(res)
     cur.execute("SELECT value FROM meter_data WHERE meter_id = %s AND resolution = %s ORDER BY recorded DESC LIMIT %s", (meter_id, res, window_size))
-    window = []
+    window = [[]]
+    last_point = 0
     for data_point in cur.fetchall():
-        window.append(data_point[0])
-        predictions = buildingNN.predict_sequences_multiple(loaded_model, window, window_size)
+        val = data_point[0]
+        if val == None:
+            val = last_point
+        window[0].append([val])
+        last_point = val
+    window = np.array(window, dtype=float)
+    predictions = buildingNN.predict_sequences_multiple(loaded_model, window, window_size)
+    print(window, predictions)
 
 if __name__ == "__main__":
     main()
