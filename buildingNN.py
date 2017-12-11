@@ -31,14 +31,14 @@ def make_batches(batch_size, data_set):
     y = [data_set[batch_size + i] for i in range(0, len(data_set) - batch_size)]
     return x, y
 
-def predict_sequences_multiple(model, data, window_size, prediction_len):
+def predict_sequences_multiple(model, data, window_size):
     # Predict sequence of window_size steps before shifting prediction run forward by window_size steps
     prediction_seqs = []
     # print('length of data', len(data), len(data[0]), '\n=========data=======\n', data)
-    for i in range(int(len(data) / prediction_len)):
-        curr_frame = data[i * prediction_len]
+    for i in range(int(len(data) / window_size)):
+        curr_frame = data[i * window_size]
         predicted = []
-        for j in range(prediction_len):
+        for j in range(window_size):
             predicted.append(model.predict(curr_frame[np.newaxis, :, :])[0, 0])
             curr_frame = curr_frame[1:]
             curr_frame = np.insert(curr_frame, [window_size - 1], predicted[-1], axis=0)
@@ -130,7 +130,7 @@ def main():
         model = create_model(1, window_size, 100, 1)
 
         model.fit(x_train, y_train, batch_size=32, epochs=epochs, validation_split=0.1, shuffle=True)
-        predictions = predict_sequences_multiple(model, x_test, window_size, window_size)
+        predictions = predict_sequences_multiple(model, x_test, window_size)
         # print(len(x_test), len(y_test), len(predictions))
         plot_results_multiple(predictions, y_test, window_size)
         print('Accuracy/Mean Squared Error: ', model.evaluate(x_test, y_test))
