@@ -37,6 +37,7 @@ def main():
     # grab most recent data
     window_size = choose_res(res)
     cur.execute("SELECT value FROM meter_data WHERE meter_id = %s AND resolution = %s ORDER BY recorded DESC LIMIT %s", (meter_id, res, window_size))
+    # print("SELECT value FROM meter_data WHERE meter_id = %s AND resolution = %s ORDER BY recorded DESC LIMIT %s" %(meter_id, res, window_size))
     window = [[]]
     last_point = 0
     for data_point in cur.fetchall():
