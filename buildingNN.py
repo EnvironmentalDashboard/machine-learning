@@ -112,7 +112,7 @@ def build_train_and_test_data(data, window_size, training_pct):
 
     return x_train, y_train, x_test, y_test
 
-def window_size(resolution):
+def windowSize(resolution):
     if resolution == 'day':
         return 7
     if resolution == 'hour':
@@ -122,11 +122,11 @@ def window_size(resolution):
 
 def main():
     if len(sys.argv) != 2:
-        print("Please provide a meter ID as a command line argument")
+        print("Please provide a resolution as a command line argument")
         sys.exit(0)
     epochs = 1
     res = sys.argv[1]
-    window_size = window_size(res)
+    window_size = windowSize(res)
     db = pymysql.connect(host="67.205.179.187", port=3306, user=config.username, password=config.password, db="csci374", autocommit=True)
     cur = db.cursor()
     instances = query_db(cur, res)
