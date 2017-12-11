@@ -39,7 +39,7 @@ def main():
     window = []
     for data_point in cur.fetchall():
         window.append(data_point[0])
-    predictions = buildingNN.predict_sequences_multiple(loaded_model, window, window_size)
+        predictions = buildingNN.predict_sequences_multiple(loaded_model, window, window_size)
 
 if __name__ == "__main__":
     main()
