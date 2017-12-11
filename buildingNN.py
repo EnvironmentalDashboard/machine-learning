@@ -66,7 +66,7 @@ def query_db(cur, res):
     cur.execute("SELECT id FROM meters ORDER BY RAND() LIMIT 3") # we're going to build a seperate network for each meter
     for meter in cur.fetchall():
         instances[meter[0]] = []
-        cur.execute("SELECT value FROM meter_data WHERE meter_id = %s AND resolution = %s ORDER BY recorded DESC LIMIT 1000", int(meter[0], res))
+        cur.execute("SELECT value FROM meter_data WHERE meter_id = %s AND resolution = %s ORDER BY recorded DESC LIMIT 1000", int(meter[0]), res)
         last_point = 0
         for data_point in cur.fetchall():
             val = data_point[0]
