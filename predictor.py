@@ -17,14 +17,15 @@ def choose_res(resolution):
 
 #argv[1] = meter_id, argv[2] = resolution
 def main():
-    if len(sys.argv) != 2:
-        print("Please give a meter ID as a single command line argument")
+    if len(sys.argv) != 3:
+        print("Please provide a meter ID and resolution as command line arguments")
         sys.exit(0)
     path = os.getcwd()
-    chosen_res = choose_res(sys.argv[2])
+    meter_id = sys.argv[1]
+    res = sys.argv[2]
     db = pymysql.connect(host="67.205.179.187", port=3306, user=config.username, password=config.password, db="csci374", autocommit=True)
     cur = db.cursor()
-    cur.execute("SELECT model, weights FROM models WHERE meter_id = %s LIMIT 1", sys.argv[1]);
+    cur.execute("SELECT model, weights FROM models WHERE meter_id = %s LIMIT 1", meter_id);
     result = cur.fetchone()
     with open(path + "/tmp.h5", 'wb') as weights_file:
         weights_file.write(result[1])
@@ -33,6 +34,11 @@ def main():
     loaded_model.load_weights(path + "/tmp.h5")
     loaded_model.compile(loss="mse", optimizer="adam")
     predictions = buildingNN.predict_sequences_multiple(loaded_model, x_test, chosen_res, chosen_res)
+    # grab most recent data
+    cur.execute("SELECT value FROM meter_data WHERE meter_id = %s AND resolution = %s ORDER BY recorded DESC LIMIT %s", (meter_id, res, choose_res(res)))
+    window = []
+    for data_point in cur.fetchall():
+        window.append(data_point[0])
 
 if __name__ == "__main__":
     main()
