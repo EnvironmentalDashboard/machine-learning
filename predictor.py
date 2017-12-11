@@ -26,7 +26,7 @@ def main():
     res = sys.argv[2]
     db = pymysql.connect(host="67.205.179.187", port=3306, user=config.username, password=config.password, db="csci374", autocommit=True)
     cur = db.cursor()
-    cur.execute("SELECT model, weights FROM models WHERE meter_id = %s LIMIT 1", meter_id);
+    cur.execute("SELECT model, weights FROM models WHERE meter_id = %s AND res = %s LIMIT 1", (meter_id, res));
     result = cur.fetchone()
     with open(path + "/tmp.h5", 'wb') as weights_file:
         weights_file.write(result[1])

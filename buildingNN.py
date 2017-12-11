@@ -148,7 +148,7 @@ def main():
         print('Accuracy/Mean Squared Error: ', model.evaluate(x_test, y_test))
         model_json = model.to_json()
         model.save_weights(path + "/model.h5") # serialize weights to HDF5 to read from later
-        cur.execute("INSERT INTO models (meter_id, model, weights) VALUES (%s, %s, %s)", (meter[0], model_json, open(path + "/model.h5", "rb").read()))
+        cur.execute("INSERT INTO models (meter_id, res, model, weights) VALUES (%s, %s, %s, %s)", (meter[0], res, model_json, open(path + "/model.h5", "rb").read()))
     try:
         os.remove(path + "/model.h5")
     except OSError:
