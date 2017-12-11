@@ -8,7 +8,7 @@ from keras.models import Sequential, model_from_json
 from keras.layers import Activation, Dense, Dropout, LSTM
 import buildingNN
 
-def window_size(resolution):
+def windowSize(resolution):
     if resolution == 'day':
         return 7
     if resolution == 'hour':
@@ -26,7 +26,7 @@ def main():
     res = sys.argv[2]
     db = pymysql.connect(host="67.205.179.187", port=3306, user=config.username, password=config.password, db="csci374", autocommit=True)
     cur = db.cursor()
-    cur.execute("SELECT model, weights FROM models WHERE meter_id = %s LIMIT 1", meter_id);
+    cur.execute("SELECT model, weights FROM models WHERE meter_id = %s AND res = %s LIMIT 1", (meter_id, res));
     result = cur.fetchone()
     with open(path + "/tmp.h5", 'wb') as weights_file:
         weights_file.write(result[1])
@@ -35,7 +35,7 @@ def main():
     loaded_model.load_weights(path + "/tmp.h5")
     loaded_model.compile(loss="mse", optimizer="adam")
     # grab most recent data
-    window_size = window_size(res)
+    window_size = windowSize(res)
     cur.execute("SELECT value FROM meter_data WHERE meter_id = %s AND resolution = %s ORDER BY recorded DESC LIMIT %s", (meter_id, res, window_size))
     # print("SELECT value FROM meter_data WHERE meter_id = %s AND resolution = %s ORDER BY recorded DESC LIMIT %s" %(meter_id, res, window_size))
     window = [[]]
