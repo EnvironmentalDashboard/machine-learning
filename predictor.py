@@ -8,7 +8,7 @@ from keras.models import Sequential, model_from_json
 from keras.layers import Activation, Dense, Dropout, LSTM
 import buildingNN
 
-def window_size(resolution):
+def windowSize(resolution):
     if resolution == 'day':
         return 7
     if resolution == 'hour':
@@ -35,7 +35,7 @@ def main():
     loaded_model.load_weights(path + "/tmp.h5")
     loaded_model.compile(loss="mse", optimizer="adam")
     # grab most recent data
-    window_size = window_size(res)
+    window_size = windowSize(res)
     cur.execute("SELECT value FROM meter_data WHERE meter_id = %s AND resolution = %s ORDER BY recorded DESC LIMIT %s", (meter_id, res, window_size))
     # print("SELECT value FROM meter_data WHERE meter_id = %s AND resolution = %s ORDER BY recorded DESC LIMIT %s" %(meter_id, res, window_size))
     window = [[]]
@@ -46,6 +46,7 @@ def main():
             val = last_point
         window[0].append(val)
         last_point = val
+    print(window)
     window[0] = buildingNN.normalize_data(window[0])
     window = np.array(window, dtype=float)
     prediction = loaded_model.predict(window)
