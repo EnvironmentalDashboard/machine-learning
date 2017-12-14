@@ -15,6 +15,7 @@ from sklearn.preprocessing import StandardScaler
 from pandas import Series
 from keras.models import Sequential, model_from_json
 from keras.layers import Activation, Dense, Dropout, LSTM
+from math import sqrt
 
 def create_model(layer1, layer2, layer3, layer4):  # do neural net stuff
     model = Sequential()
@@ -44,7 +45,6 @@ def predict_sequences_multiple(model, data, window_size):
         predicted = []
         for j in range(window_size):
             predicted.append(model.predict(curr_frame[np.newaxis, :, :])[0, 0])
-            print('===========curr_frame===========', curr_frame)
             curr_frame = curr_frame[1:]
             curr_frame = np.insert(curr_frame, [window_size - 1], predicted[-1], axis=0)
         prediction_seqs.append(predicted)
@@ -61,16 +61,17 @@ def plot_results_multiple(predicted_data, true_data, prediction_len):
         plt.plot(padding + data, label='Prediction')
         # plt.legend()
     plt.show()
+    return fig
 
 
 def query_db(cur, res):
     # load data from database
     # REMEMBER TO REMOVE LIMITs IN FINAL CODE!!!
     instances = {}
-    cur.execute("SELECT id FROM meters ORDER BY RAND() LIMIT 3") # we're going to build a seperate network for each meter
+    cur.execute("SELECT id FROM meters WHERE id = 266") # we're going to build a seperate network for each meter
     for meter in cur.fetchall():
         instances[meter[0]] = []
-        cur.execute("SELECT value FROM meter_data WHERE meter_id = %s AND resolution = %s ORDER BY recorded DESC LIMIT 1000", (int(meter[0]), res))
+        cur.execute("SELECT value FROM meter_data WHERE meter_id = %s AND resolution = %s ORDER BY recorded DESC", (int(meter[0]), res))
         last_point = 0
         for data_point in cur.fetchall():
             val = data_point[0]
@@ -90,12 +91,24 @@ def normalize_data(data):
     standardized = scaler.transform(series_values)
     return standardized
 
-def build_train_and_test_data(data, window_size, training_pct):
+def convertRange(val, old_min, old_max, new_min, new_max):
+        if old_max == old_min:
+            return 0
+        return (((new_max - new_min) * (val - old_min)) / (old_max - old_min)) + new_min
+
+def build_train_and_test_data(data, window_size, training_pct, normal_in_window):
     test_set = []
     training_set = []
     actual_labels = []
     meter_id = data[0]
     meter_array = data[1]
+    train_array = meter_array[:int(len(meter_array)*training_pct)]
+    test_array = meter_array[int(len(meter_array)*training_pct):]
+    old_max_train = max(train_array)
+    old_min_train = min(train_array)
+    old_max_test = max(test_array)
+    old_min_test = min(test_array)
+    """
     for i in range(len(meter_array) - window_size):
         if random.randint(0, 100) < training_pct:
             for tmp in meter_array[i:(i + window_size - 1)]:
@@ -104,17 +117,43 @@ def build_train_and_test_data(data, window_size, training_pct):
             for tmp in meter_array[i:(i + window_size - 1)]:
                 test_set.append(tmp)
         actual_labels.append(meter_array[i + window_size])
-    training_set = normalize_data(training_set)
-    test_set = normalize_data(test_set)
-    x_train, y_train = make_batches(window_size, training_set)
-    x_test, y_test = make_batches(window_size, test_set)
+    """
+    # if normal_in_window:
+    #     x_train, _ = make_batches(window_size, train_array)
+    #     x_test, _ = make_batches(window_size, test_array)
+    #     for i in range(len(x_train)):
+    #         x_train[i] = normalize_data(x_train[i])
+    #     y_train = [[x_train[i][-1]] for i in range(1, len(x_train))] + [x_train[-1][-1]]
+    #     for i in range(len(x_test)):
+    #         x_test[i] = normalize_data(x_test[i])
+    #     y_test = [[x_test[i][-1]] for i in range(1, len(x_test))] + [x_test[-1][-1]]
+    # else:
+
+    # training_set = normalize_data(train_array)
+    # print("===========normalized training=========", training_set)
+    # test_set = normalize_data(test_array)
+    # x_train, y_train = make_batches(window_size, training_set)
+    # x_test, y_test = make_batches(window_size, test_set)
+
+    for i in range(len(train_array)):
+        train_array[i] = [convertRange(train_array[i], old_min_train, old_max_train, 0, 10)]
+    for i in range(len(test_array)):
+        test_array[i] = [convertRange(test_array[i], old_min_test, old_max_test, 0, 10)]
+    x_train, y_train = make_batches(window_size, train_array)
+    x_test, y_test = make_batches(window_size, test_array)
+    print('x_train =====', x_train)
+    print('y_train =====', y_train)
+    diff = max(y_test)[0]-min(y_test)[0]
 
     x_train = np.array(x_train, dtype=float)
     y_train = np.array(y_train, dtype=float)
     x_test = np.array(x_test, dtype=float)
     y_test = np.array(y_test, dtype=float)
 
-    return x_train, y_train, x_test, y_test
+    print('x_train =====', x_train)
+    print('y_train =====', y_train)
+    print('diff: ',diff)
+    return x_train, y_train, x_test, y_test, diff
 
 def windowSize(resolution):
     if resolution == 'day':
@@ -126,7 +165,7 @@ def windowSize(resolution):
 
 def main():
     args = len(sys.argv)
-    epochs = 1
+    epochs = 50
     path = os.getcwd()
     if args == 1:
         res = 'hour'
@@ -147,21 +186,24 @@ def main():
         if len(meter[1]) == 0:
             print(meter[0], "has no data")
             continue
-        x_train, y_train, x_test, y_test = build_train_and_test_data(meter, window_size, 90)
+        x_train, y_train, x_test, y_test, diff= build_train_and_test_data(meter, window_size, 0.9, True)
 
-        model = create_model(1, window_size, 100, 1)
+        model = create_model(1, window_size, 200, 1)
 
-        model.fit(x_train, y_train, batch_size=32, epochs=epochs, validation_split=0.1, shuffle=True)
+        model.fit(x_train, y_train, batch_size=32, epochs=epochs, validation_split= 0, shuffle=False)
+        MSE = model.evaluate(x_test, y_test)
+        print('Accuracy/Mean Squared Error: ', MSE)
+        NRMSD = sqrt(MSE)/float(diff)
+        print("NRMSD: ", NRMSD)
         if chart:
             predictions = predict_sequences_multiple(model, x_test, window_size)
             # print(len(x_test), len(y_test), len(predictions))
-            plot_results_multiple(predictions, y_test, window_size)
-        accuracy = model.evaluate(x_test, y_test)
-        print('Accuracy/Mean Squared Error: ', accuracy)
+            fig = plot_results_multiple(predictions, y_test, window_size)
+            fig.savefig('id%s_%s_epochs%s_ws%s_nn%s'%(266, res, epochs, window_size, 200))
         # See https://machinelearningmastery.com/save-load-keras-deep-learning-models/
         model_json = model.to_json()
         model.save_weights(path + "/model.h5") # serialize weights to HDF5 to read from later
-        cur.execute("INSERT INTO models (meter_id, res, model, weights, accuracy) VALUES (%s, %s, %s, %s, %s)", (meter[0], res, model_json, open(path + "/model.h5", "rb").read(), np.asscalar(accuracy)))
+        cur.execute("INSERT INTO models (meter_id, res, model, weights, MSE, NRMSD) VALUES (%s, %s, %s, %s, %s, %s)", (meter[0], res, model_json, open(path + "/model.h5", "rb").read(), np.asscalar(MSE), NRMSD))
     try:
         os.remove(path + "/model.h5")
     except OSError:
