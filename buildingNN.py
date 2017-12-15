@@ -19,7 +19,7 @@ from keras.layers import Activation, Dense, Dropout, LSTM
 
 from math import sqrt
 
-def create_model(layer1, layer2, layer3, layer4):  # do neural net stuff
+def create_model(layer1, layer2, layer3, layer4, lr):  # do neural net stuff
     model = Sequential()
     model.add(LSTM(
         input_shape=(layer2, layer1),
@@ -30,7 +30,7 @@ def create_model(layer1, layer2, layer3, layer4):  # do neural net stuff
     model.add(Dropout(0.2))
     model.add(Dense(units=layer4))
     model.add(Activation("linear"))
-    optimizer = optimizers.Adam(lr = 0.01)
+    optimizer = optimizers.Adam(lr = lr)
     model.compile(loss="mse", optimizer = optimizer)
     return model
 
@@ -174,6 +174,7 @@ def main():
     val_pct = 0.1
     specific_meter = None
     chart = False
+    lr = 0.001
     if args == 1: # no args
         res = 'hour'
     elif args == 2: # only resolution provided
@@ -208,6 +209,15 @@ def main():
         epochs = int(sys.argv[4])
         training_pct = float(sys.argv[5])
         NN = int(sys.argv[6])
+    elif args == 8:
+        res = sys.argv[1]
+        if sys.argv[2] == 'chart':
+            chart = True
+        specific_meter = int(sys.argv[3])
+        epochs = int(sys.argv[4])
+        training_pct = float(sys.argv[5])
+        NN = int(sys.argv[6])
+        lr = float(sys.argv[7])
     window_size = windowSize(res)
     db = pymysql.connect(host="67.205.179.187", port=3306, user=config.username, password=config.password, db="csci374", autocommit=True)
     cur = db.cursor()
@@ -220,7 +230,7 @@ def main():
             continue
         x_train, y_train, x_test, y_test, diff, normalization= build_train_and_test_data(meter, window_size, training_pct, True)
 
-        model = create_model(1, window_size, NN, 1)
+        model = create_model(1, window_size, NN, 1, lr)
 
         model.fit(x_train, y_train, batch_size=32, epochs=epochs, validation_split= val_pct, shuffle=False)
         MSE = model.evaluate(x_test, y_test)
@@ -234,9 +244,9 @@ def main():
             fig = plot_results_multiple(predictions, y_test, window_size, name, MSE, NRMSD, res)
             fig.savefig('id%s_%s_epochs%s_ws%s_nn%s_%s'%(266, res, epochs, window_size, NN, normalization))
 
-            with open('recorder.csv', mode='a', newline='') as csvfile:
-                filewriter = csv.writer(csvfile, delimiter = ',')
-                filewriter.writerow([MSE, NRMSD, epochs, window_size, NN, normalization, training_pct, val_pct])
+        with open('recorder.csv', mode='a', newline='') as csvfile:
+            filewriter = csv.writer(csvfile, delimiter = ',')
+            filewriter.writerow([MSE, NRMSD, epochs, window_size, NN, normalization, training_pct, val_pct, lr])
 
         # See https://machinelearningmastery.com/save-load-keras-deep-learning-models/
         model_json = model.to_json()
@@ -249,9 +259,9 @@ def main():
     db.close()
 
 def testing():
-    temp_epochs = [1, 5, 10, 20, 50, 100, 200]
+    temp_epochs = [0.7, 0.6, 0.4, 0.3, 0.2]
     for x in temp_epochs:
-        sys.argv[4] = x
+        sys.argv[7] = x
         main()
 
 if __name__ == '__main__':
