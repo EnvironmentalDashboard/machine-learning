@@ -226,7 +226,7 @@ def main():
         specific_meter = int(sys.argv[3])
         epochs = int(sys.argv[4])
         training_pct = float(sys.argv[5])
-        NN = sys.argv[6]
+        NN = int(sys.argv[6])
     window_size = windowSize(res)
     db = pymysql.connect(host="67.205.179.187", port=3306, user=config.username, password=config.password, db="csci374", autocommit=True)
     cur = db.cursor()
