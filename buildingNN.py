@@ -93,7 +93,7 @@ def query_db(cur, res, specific_meter):
             val = data_point[0]
             if val == None:  # very few data points are null so just fill in the ones that are
                 val = last_point
-            instances[meter[0]].append(val)
+            instances[specific_meter].append(val)
             last_point = val
     return instances
 
