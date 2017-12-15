@@ -124,26 +124,6 @@ def build_train_and_test_data(data, window_size, training_pct, normal_in_window)
     old_min_train = min(train_array)
     old_max_test = max(test_array)
     old_min_test = min(test_array)
-    """
-    for i in range(len(meter_array) - window_size):
-        if random.randint(0, 100) < training_pct:
-            for tmp in meter_array[i:(i + window_size - 1)]:
-                training_set.append(tmp)
-        else:
-            for tmp in meter_array[i:(i + window_size - 1)]:
-                test_set.append(tmp)
-        actual_labels.append(meter_array[i + window_size])
-    """
-    # if normal_in_window:
-    #     x_train, _ = make_batches(window_size, train_array)
-    #     x_test, _ = make_batches(window_size, test_array)
-    #     for i in range(len(x_train)):
-    #         x_train[i] = normalize_data(x_train[i])
-    #     y_train = [[x_train[i][-1]] for i in range(1, len(x_train))] + [x_train[-1][-1]]
-    #     for i in range(len(x_test)):
-    #         x_test[i] = normalize_data(x_test[i])
-    #     y_test = [[x_test[i][-1]] for i in range(1, len(x_test))] + [x_test[-1][-1]]
-    # else:
 
     training_set = normalize_data(train_array)
     print("===========normalized training=========", training_set)
@@ -184,6 +164,7 @@ def windowSize(resolution):
         return 10
 
 def main():
+    temp_epochs = [1, 5, 10, 20, 50, 100, 200]
     # Res, Chart, MeterID, Epochs, Training_Percent, NN
     args = len(sys.argv)
     epochs = 5
@@ -253,9 +234,9 @@ def main():
             fig = plot_results_multiple(predictions, y_test, window_size, name, MSE, NRMSD, res)
             fig.savefig('id%s_%s_epochs%s_ws%s_nn%s_%s'%(266, res, epochs, window_size, NN, normalization))
 
-        with open('recorder.csv', mode='a', newline='') as csvfile:
-            filewriter = csv.writer(csvfile, delimiter = ',')
-            filewriter.writerow([MSE, NRMSD, epochs, window_size, NN, normalization, training_pct, val_pct])
+            with open('recorder.csv', mode='a', newline='') as csvfile:
+                filewriter = csv.writer(csvfile, delimiter = ',')
+                filewriter.writerow([MSE, NRMSD, epochs, window_size, NN, normalization, training_pct, val_pct])
 
         # See https://machinelearningmastery.com/save-load-keras-deep-learning-models/
         model_json = model.to_json()
@@ -267,5 +248,11 @@ def main():
         pass
     db.close()
 
+def testing():
+    temp_epochs = [1, 5, 10, 20, 50, 100, 200]
+    for x in temp_epochs:
+        sys.argv[4] = x
+        main()
 if __name__ == '__main__':
     main()
+    # testing()
