@@ -10,8 +10,6 @@ ini_set('display_errors', 'On');
 class BuildingOS {
   
   /**
-   * You have to instantiate this class with the org id of the meters you want
-   * 
    * @param $db The database connection
    *
    * Sets the token for the class.

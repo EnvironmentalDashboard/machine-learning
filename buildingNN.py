@@ -69,14 +69,25 @@ def plot_results_multiple(predicted_data, true_data, prediction_len, name, MSE, 
     return fig
 
 
-def query_db(cur, res):
+def query_db(cur, res, specific_meter):
     # load data from database
     # REMEMBER TO REMOVE LIMITs IN FINAL CODE!!!
     instances = {}
-    cur.execute("SELECT id FROM meters WHERE id = 266") # we're going to build a seperate network for each meter
-    for meter in cur.fetchall():
-        instances[meter[0]] = []
-        cur.execute("SELECT value FROM meter_data WHERE meter_id = %s AND resolution = %s ORDER BY recorded DESC", (int(meter[0]), res))
+    if specific_meter == None:
+        cur.execute("SELECT id FROM meters WHERE id = 266") # we're going to build a seperate network for each meter
+        for meter in cur.fetchall():
+            instances[meter[0]] = []
+            cur.execute("SELECT value FROM meter_data WHERE meter_id = %s AND resolution = %s ORDER BY recorded DESC", (int(meter[0]), res))
+            last_point = 0
+            for data_point in cur.fetchall():
+                val = data_point[0]
+                if val == None:  # very few data points are null so just fill in the ones that are
+                    val = last_point
+                instances[meter[0]].append(val)
+                last_point = val
+    else:
+        instances[specific_meter] = []
+        cur.execute("SELECT value FROM meter_data WHERE meter_id = %s AND resolution = %s ORDER BY recorded DESC", (int(specific_meter), res))
         last_point = 0
         for data_point in cur.fetchall():
             val = data_point[0]
@@ -219,7 +230,7 @@ def main():
     window_size = windowSize(res)
     db = pymysql.connect(host="67.205.179.187", port=3306, user=config.username, password=config.password, db="csci374", autocommit=True)
     cur = db.cursor()
-    instances = query_db(cur, res)
+    instances = query_db(cur, res, specific_meter)
     # print(len(instances), len(instances[1]))
     for meter in instances.items():
         print("Processing meter", meter[0])
