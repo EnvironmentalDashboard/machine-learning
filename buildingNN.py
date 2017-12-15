@@ -173,21 +173,49 @@ def windowSize(resolution):
         return 10
 
 def main():
+    # Res, Chart, MeterID, Epochs, Training_Percent, NN
     args = len(sys.argv)
     epochs = 5
     path = os.getcwd()
-    NN = 20
+    NN = 50
     training_pct = 0.9
     val_pct = 0.1
-    if args == 1:
+    specific_meter = None
+    chart = False
+    if args == 1: # no args
         res = 'hour'
-        chart = False
-    elif args == 2:
+    elif args == 2: # only resolution provided
         res = sys.argv[1]
-        chart = False
-    else:
+    elif args == 3:
         res = sys.argv[1]
-        chart = True
+        if sys.argv[2] == 'chart':
+            chart = True
+    elif args == 4:
+        res = sys.argv[1]
+        if sys.argv[2] == 'chart':
+            chart = True
+        specific_meter = sys.argv[3]
+    elif args == 5:
+        res = sys.argv[1]
+        if sys.argv[2] == 'chart':
+            chart = True
+        specific_meter = sys.argv[3]
+        epochs = sys.argv[4]
+    elif args == 6:
+        res = sys.argv[1]
+        if sys.argv[2] == 'chart':
+            chart = True
+        specific_meter = sys.argv[3]
+        epochs = sys.argv[4]
+        training_pct = sys.argv[5]
+    elif args == 7:
+        res = sys.argv[1]
+        if sys.argv[2] == 'chart':
+            chart = True
+        specific_meter = sys.argv[3]
+        epochs = sys.argv[4]
+        training_pct = sys.argv[5]
+        NN = sys.argv[6]
     window_size = windowSize(res)
     db = pymysql.connect(host="67.205.179.187", port=3306, user=config.username, password=config.password, db="csci374", autocommit=True)
     cur = db.cursor()
