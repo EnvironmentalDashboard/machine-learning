@@ -14,8 +14,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 from pandas import Series
-from keras.models import Sequential, model_from_json
+from keras.models import Sequential, model_from_json, optimizers
 from keras.layers import Activation, Dense, Dropout, LSTM
+
 from math import sqrt
 
 def create_model(layer1, layer2, layer3, layer4):  # do neural net stuff
@@ -29,7 +30,8 @@ def create_model(layer1, layer2, layer3, layer4):  # do neural net stuff
     model.add(Dropout(0.2))
     model.add(Dense(units=layer4))
     model.add(Activation("linear"))
-    model.compile(loss="mse", optimizer="adam")
+    optimizer = optimizers.Adam(lr = 0.01)
+    model.compile(loss="mse", optimizer = optimizer)
     return model
 
 def make_batches(batch_size, data_set):
