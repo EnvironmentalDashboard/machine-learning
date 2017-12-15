@@ -1,6 +1,5 @@
 """
 Will build models for all meters using data that defaults to hour resolution but can be specified via the first command line arguemnt
-If a second command line option is given, the program will chart the data and prediction using matplotlib
 """
 import datetime
 import sys
