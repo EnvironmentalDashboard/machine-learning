@@ -108,9 +108,9 @@ def normalize_data(data):
     return standardized
 
 def convertRange(val, old_min, old_max, new_min, new_max):
-        if old_max == old_min:
-            return 0
-        return (((new_max - new_min) * (val - old_min)) / (old_max - old_min)) + new_min
+    if old_max == old_min:
+        return 0
+    return (((new_max - new_min) * (val - old_min)) / (old_max - old_min)) + new_min
 
 def build_train_and_test_data(data, window_size, training_pct, normal_in_window):
     test_set = []
@@ -218,14 +218,14 @@ def main():
             chart = True
         specific_meter = sys.argv[3]
         epochs = sys.argv[4]
-        training_pct = sys.argv[5]
+        training_pct = float(sys.argv[5])
     elif args == 7:
         res = sys.argv[1]
         if sys.argv[2] == 'chart':
             chart = True
         specific_meter = sys.argv[3]
         epochs = sys.argv[4]
-        training_pct = sys.argv[5]
+        training_pct = float(sys.argv[5])
         NN = sys.argv[6]
     window_size = windowSize(res)
     db = pymysql.connect(host="67.205.179.187", port=3306, user=config.username, password=config.password, db="csci374", autocommit=True)
