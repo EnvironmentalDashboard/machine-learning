@@ -73,7 +73,6 @@ def plot_results_multiple(predicted_data, true_data, prediction_len, name, MSE, 
 
 def query_db(cur, res, specific_meter):
     # load data from database
-    # REMEMBER TO REMOVE LIMITs IN FINAL CODE!!!
     instances = {}
     if specific_meter == None:
         cur.execute("SELECT id FROM meters") # we're going to build a seperate network for each meter
@@ -166,12 +165,11 @@ def windowSize(resolution):
         return 10
 
 def main():
-    temp_epochs = [1, 5, 10, 20, 50, 100, 200]
-    # Res, Chart, MeterID, Epochs, Training_Percent, NN
+    # args are Res, Chart, MeterID, Epochs, Training_Percent, NN
     args = len(sys.argv)
     epochs = 5
     path = os.getcwd()
-    NN = 50
+    NN = 100
     training_pct = 0.9
     val_pct = 0.1
     specific_meter = None
@@ -255,6 +253,8 @@ def testing():
     for x in temp_epochs:
         sys.argv[4] = x
         main()
+
 if __name__ == '__main__':
     main()
     # testing()
+    
