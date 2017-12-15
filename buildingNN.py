@@ -74,7 +74,7 @@ def query_db(cur, res, specific_meter):
     # REMEMBER TO REMOVE LIMITs IN FINAL CODE!!!
     instances = {}
     if specific_meter == None:
-        cur.execute("SELECT id FROM meters WHERE id = 266") # we're going to build a seperate network for each meter
+        cur.execute("SELECT id FROM meters") # we're going to build a seperate network for each meter
         for meter in cur.fetchall():
             instances[meter[0]] = []
             cur.execute("SELECT value FROM meter_data WHERE meter_id = %s AND resolution = %s ORDER BY recorded DESC", (int(meter[0]), res))
