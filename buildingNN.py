@@ -205,26 +205,26 @@ def main():
         res = sys.argv[1]
         if sys.argv[2] == 'chart':
             chart = True
-        specific_meter = sys.argv[3]
+        specific_meter = int(sys.argv[3])
     elif args == 5:
         res = sys.argv[1]
         if sys.argv[2] == 'chart':
             chart = True
-        specific_meter = sys.argv[3]
-        epochs = sys.argv[4]
+        specific_meter = int(sys.argv[3])
+        epochs = int(sys.argv[4])
     elif args == 6:
         res = sys.argv[1]
         if sys.argv[2] == 'chart':
             chart = True
-        specific_meter = sys.argv[3]
-        epochs = sys.argv[4]
+        specific_meter = int(sys.argv[3])
+        epochs = int(sys.argv[4])
         training_pct = float(sys.argv[5])
     elif args == 7:
         res = sys.argv[1]
         if sys.argv[2] == 'chart':
             chart = True
-        specific_meter = sys.argv[3]
-        epochs = sys.argv[4]
+        specific_meter = int(sys.argv[3])
+        epochs = int(sys.argv[4])
         training_pct = float(sys.argv[5])
         NN = sys.argv[6]
     window_size = windowSize(res)
